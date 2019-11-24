@@ -1,0 +1,2 @@
+include ':app', ':smokare', ':wear'
+rootProject.name='Smokare'
