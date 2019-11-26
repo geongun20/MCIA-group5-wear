@@ -21,9 +21,12 @@ import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Scanner;
@@ -53,7 +56,10 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     Float pitch;
 
     File file;
+    File file_cig;
+
     String outstr="";
+    String outstr_cig="";
     Scanner sc;
 
 
@@ -89,6 +95,23 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         return result;
     }
 
+    private static String readAllBytesJava7(String filePath)
+    {
+        String content = "";
+
+        try
+        {
+            content = new String ( Files.readAllBytes( Paths.get(filePath) ) );
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        return content;
+    }
+
+
 
 
 
@@ -123,6 +146,25 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 Log.i( TAG2 , "file.exists" );
             }
         }
+        boolean isSuccess_cig = false;
+        if(dir.isDirectory()){
+            file_cig = new File(getExternalFilesDir(null),"cig.txt");
+            if(file_cig!=null&&!file_cig.exists()){
+                Log.i( TAG2 , "!file_cig.exists" );
+                try {
+                    isSuccess = file_cig.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally{
+                    Log.i(TAG2, "파일생성 여부 = " + isSuccess_cig);
+                }
+            }else{
+                Log.i( TAG2 , "file_cig.exists" );
+            }
+        }
+
+        outstr_cig = readAllBytesJava7( getExternalFilesDir(null)+"cig.txt" );
+
 
 
 
@@ -194,11 +236,18 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
 
     public void putDataToPhone() {
+
+
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+        outstr_cig=(sdf.format(timestamp)+"\n")+outstr_cig;
+        writeFile(file_cig,outstr_cig.getBytes());
+
 
         PutDataMapRequest putDataMapRequest = PutDataMapRequest.create("/count");
 
-        putDataMapRequest.getDataMap().putString("count", sdf.format(timestamp)+"\n");
+
+        putDataMapRequest.getDataMap().putString("count", outstr_cig);
 
         PutDataRequest request = putDataMapRequest.asPutDataRequest();
         request.setUrgent();
