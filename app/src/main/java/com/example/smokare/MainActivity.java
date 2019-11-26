@@ -23,12 +23,34 @@ import com.google.android.gms.wearable.Wearable;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.TextView;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Scanner;
+
 
 public class MainActivity extends Activity implements DataClient.OnDataChangedListener {
     private static final String COUNT_KEY = "com.example.key.count";
-    private int count = 0;
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
+    public static final String TAG2 = "TestFileActivity";
+
+    private String timestamp = "";
+
+    TextView t1;
+
+    File file;
+    String outstr="";
+    Scanner sc;
+
+
 
     TextView mText;
 
@@ -38,6 +60,35 @@ public class MainActivity extends Activity implements DataClient.OnDataChangedLi
         setContentView(R.layout.activity_main);
 
         mText = findViewById(R.id.text);
+
+        File dir = new File(getExternalFilesDir(null)+"/testfolder/");
+        System.out.println("debug1:"+getExternalFilesDir(null));
+        if (!dir.exists())
+        {
+            dir.mkdirs();
+            Log.i( TAG2 , "!dir.exists" );
+        }else{
+            Log.i( TAG2 , "dir.exists" );
+        }
+
+        boolean isSuccess = false;
+        if(dir.isDirectory()){
+            System.out.println("debug2:"+getExternalFilesDir(null));
+            file = new File(getExternalFilesDir(null)+"/testfolder/output.txt");
+            if(file!=null&&!file.exists()){
+                Log.i( TAG2 , "!file.exists" );
+                try {
+                    isSuccess = file.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally{
+                    Log.i(TAG2, "파일생성 여부 = " + isSuccess);
+                }
+            }else{
+                Log.i( TAG2 , "file.exists" );
+            }
+        }
+
 
     }
     @Override
@@ -61,7 +112,7 @@ public class MainActivity extends Activity implements DataClient.OnDataChangedLi
                 DataItem item = event.getDataItem();
                 if (item.getUri().getPath().compareTo("/count") == 0) {
                     DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                    updateCount(dataMap.getInt("count"));
+                    updateCount(dataMap.getString("count"));
                 }
             } else if (event.getType() == DataEvent.TYPE_DELETED) {
                 // DataItem deleted
@@ -70,9 +121,16 @@ public class MainActivity extends Activity implements DataClient.OnDataChangedLi
     }
 
     // Our method to update the count
-    private void updateCount(int c) {
-        System.out.println("debug");
-        count=c;
-        mText.setText("count :"+c);
+    private void updateCount(String c) {
+        timestamp = c;
+        try {
+            FileWriter fw = new FileWriter(file, true);
+            fw.write(c);
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        mText.setText("Timestamp :"+c);
     }
 }
