@@ -309,7 +309,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                     dragvalue = 0;
                 }
 
-                Log.d("ANGLE", "\t"+pitch+"\t"+roll);
+                // Log.d("ANGLE", "\t"+pitch+"\t"+roll);
             }
         }
         // mCustomDrawableView.invalidate();

@@ -54,6 +54,30 @@ public class MainActivity extends Activity implements DataClient.OnDataChangedLi
 
     TextView mText;
 
+
+    private boolean writeFile(File file , byte[] file_content){
+        boolean result;
+        FileOutputStream fos;
+        if(file!=null&&file.exists()&&file_content!=null){
+            try {
+                fos = new FileOutputStream(file);
+                try {
+                    fos.write(file_content);
+                    fos.flush();
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            result = true;
+        }else{
+            result = false;
+        }
+        return result;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -123,13 +147,7 @@ public class MainActivity extends Activity implements DataClient.OnDataChangedLi
     // Our method to update the count
     private void updateCount(String c) {
         timestamp = c;
-        try {
-            FileWriter fw = new FileWriter(file, true);
-            fw.write(c);
-            fw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        writeFile(file, c.getBytes());
 
         mText.setText("Timestamp :"+c);
     }
