@@ -68,6 +68,10 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     Float roll;
     Sensor magnetometer;
 
+    Float maxAccelCurr = 0f;
+    Float maxAccelPrev;
+    Float accelCurr;
+
     TextView t1;
 
 
@@ -173,13 +177,20 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         mRunnable = new Runnable() {
             @Override
             public void run() {
+                if (accelCurr > maxAccelCurr)
+                    maxAccelCurr = accelCurr;
+
                 if (dragvalue == 1) {
                     dragcount++;
 
-                } else {
+                }
+                else {
                     if (dragcount>20&&dragcount<100) {
+                        // Record max acceleration near the dragging
+
+                        // write Timestamp
                         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-                        outstr=(sdf.format(timestamp)+"\n")+outstr;
+                        outstr=(sdf.format(timestamp)+"\n"+maxAccelCurr+"\n")+outstr;
                         writeFile(file,outstr.getBytes());
 
                         try {
@@ -200,9 +211,11 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                                 int minute2 = Integer.parseInt(line.substring(14,16))+hour2*60;
                                 int second2 = Integer.parseInt(line.substring(17,19))+minute2*60;
                                 System.out.println("second "+second+" Second2 "+second2+"count "+count);
-                                if(second<second2+240)count++;
-
-                                else break;
+                                if(second<second2+240)
+                                    count++;
+                                else {
+                                    break;
+                                }
                             }
                             if(count>=8){
                                 putDataToPhone();
@@ -213,7 +226,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                         }catch(FileNotFoundException e){
 
                         }
-
+                        maxAccelCurr = 0f;
                     }
                     dragcount = 0;
                 }
@@ -311,6 +324,10 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
                 // Log.d("ANGLE", "\t"+pitch+"\t"+roll);
             }
+
+            // total acc
+            accelCurr = (float)Math.sqrt(mGravity[0]* mGravity[0] + mGravity[1]*mGravity[1]
+                    + mGravity[2]*mGravity[2]);
         }
         // mCustomDrawableView.invalidate();
 
