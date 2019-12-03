@@ -7,6 +7,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Vibrator;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.widget.TextView;
@@ -29,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.lang.Math;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
@@ -50,6 +52,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     int dragvalue2 = 1;
     int dragcount = 0;
     int dragcount2 = 0;
+    Float x,y;
     int numdrags = 0;
     int numcig = 0;
     Float azimut;
@@ -126,7 +129,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
 
 
-        t1 = findViewById(R.id.text);//shoudbemodified
+        t1 = findViewById(R.id.text);
 
         File dir = getExternalFilesDir(null);
 
@@ -178,6 +181,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
                 } else {
                     if (dragcount>20&&dragcount<100) {
+                        Vibrator vib = (Vibrator)getSystemService((VIBRATOR_SERVICE));
+                        vib.vibrate(1000);
                         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
                         outstr=(sdf.format(timestamp)+"\n")+outstr;
                         writeFile(file,outstr.getBytes());
@@ -274,11 +279,11 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
         mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
     }
-
-    protected void onPause() {
-        super.onPause();
-        mSensorManager.unregisterListener(this);
-    }
+//
+//    protected void onPause() {
+//        super.onPause();
+//        mSensorManager.unregisterListener(this);
+//    }
 
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
@@ -302,8 +307,11 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 azimut = orientation[0]; // orientation contains: azimut, pitch and roll
                 pitch = orientation[1];
                 roll = orientation[2];
-
-                if ((pitch <= (-0.2) && pitch >= (-1.2)) && (roll >= 0.3 && roll <= 2.2)) {
+                x=(float)(pitch-0.5);
+                y=(float)(roll+1.517);
+                x=(float)(x*Math.cos(3.1416*18/180))-(float)(y*Math.sin(3.1416*18/180));
+                y=(float)(x*Math.sin(3.1416*18/180))+(float)(y*Math.cos(3.1416*18/180));
+                if (x*x/0.2828+y*y/1.3984<1) {
                     dragvalue = 1;
                 }else {
                     dragvalue = 0;
