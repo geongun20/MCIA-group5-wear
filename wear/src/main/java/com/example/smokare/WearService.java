@@ -6,6 +6,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
@@ -59,12 +60,17 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 public class WearService extends Service implements SensorEventListener {
-    public WearService() {
+    public class WearServiceBinder extends Binder {
+        WearService getService() {
+            return WearService.this;
+        }
     }
+
+    private final IBinder mBinder = new WearServiceBinder();
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return mBinder;
     }
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
@@ -74,7 +80,7 @@ public class WearService extends Service implements SensorEventListener {
     private TextView mTextView;
     private static final String TAG2 = "MainActivity";
     private DataClient dataClient;
-    private int count = 0;
+    private int count = 1;
     private Handler handler;
     private Runnable mRunnable;
 
@@ -104,7 +110,6 @@ public class WearService extends Service implements SensorEventListener {
     Float maxAccelCurr = 0f;
     Float maxAccelPrev;
     Float accelCurr = 0f;
-
 
 
     private boolean writeFile(File file, byte[] file_content) {
@@ -228,7 +233,7 @@ public class WearService extends Service implements SensorEventListener {
 
                         try {
                             sc = new Scanner(file);
-                            int count = 1;
+                            count = 1;
                             String line = sc.nextLine();
                             int hour = Integer.parseInt(line.substring(11, 13));
                             int minute = Integer.parseInt(line.substring(14, 16)) + hour * 60;
@@ -282,7 +287,13 @@ public class WearService extends Service implements SensorEventListener {
 
     }
 
+    public int getCount() {
+        return count;
+    }
 
+    public int getDragcount() {
+        return dragcount;
+    }
 
 
     public void putDataToPhone() {
