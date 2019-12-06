@@ -55,6 +55,7 @@ public class MainActivity extends WearableActivity {
 
         ContextCompat.startForegroundService(this, serviceIntent);
 
+
     }
 
 

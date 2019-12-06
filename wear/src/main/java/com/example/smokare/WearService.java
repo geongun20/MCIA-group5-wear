@@ -1,5 +1,41 @@
 package com.example.smokare;
 
+import android.content.Context;
+import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Vibrator;
+import android.support.wearable.activity.WearableActivity;
+import android.util.Log;
+import android.widget.TextView;
+import android.os.Handler;
+
+import androidx.core.content.ContextCompat;
+
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.android.gms.wearable.DataClient;
+import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.lang.Math;
+import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -21,23 +57,6 @@ import android.widget.TextView;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.wearable.DataClient;
-import com.google.android.gms.wearable.DataItem;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
-import com.google.android.gms.wearable.Wearable;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Scanner;
 
 public class WearService extends Service implements SensorEventListener {
     public WearService() {
@@ -97,7 +116,7 @@ public class WearService extends Service implements SensorEventListener {
                 try {
                     fos.write(file_content);
                     fos.flush();
-                    fos.close();
+                    // fos.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -175,7 +194,7 @@ public class WearService extends Service implements SensorEventListener {
             if (file_cig != null && !file_cig.exists()) {
                 Log.i(TAG2, "!file_cig.exists");
                 try {
-                    isSuccess = file_cig.createNewFile();
+                    isSuccess_cig = file_cig.createNewFile();
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
@@ -186,7 +205,8 @@ public class WearService extends Service implements SensorEventListener {
             }
         }
 
-        outstr_cig = readAllBytesJava7(getExternalFilesDir(null) + "cig.txt");
+        outstr_cig = readAllBytesJava7(getExternalFilesDir(null) + "/cig.txt");
+
 
 
         handler = new Handler();
@@ -195,15 +215,13 @@ public class WearService extends Service implements SensorEventListener {
             public void run() {
                 if (accelCurr > maxAccelCurr)
                     maxAccelCurr = accelCurr;
-                System.out.println("asd");
 
                 if (dragvalue == 1) {
                     dragcount++;
-
+                    Log.d("dragcount", Integer.toString(dragcount));
                 } else {
-                    if (dragcount > 20 && dragcount < 100) {
-                        Vibrator vib = (Vibrator) getSystemService((VIBRATOR_SERVICE));
-                        vib.vibrate(1000);
+                    if (dragcount > 5 && dragcount < 25) {
+                        Log.d("drag","drag");
                         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
                         outstr = (sdf.format(timestamp) + "\n") + outstr;
                         writeFile(file, outstr.getBytes());
@@ -223,18 +241,20 @@ public class WearService extends Service implements SensorEventListener {
                                 int hour2 = Integer.parseInt(line.substring(11, 13));
                                 int minute2 = Integer.parseInt(line.substring(14, 16)) + hour2 * 60;
                                 int second2 = Integer.parseInt(line.substring(17, 19)) + minute2 * 60;
-                                //System.out.println("second "+second+" Second2 "+second2+"count "+count);
                                 if (second < second2 + 240)
                                     count++;
                                 else {
                                     break;
                                 }
                             }
+                            Log.d("count",Integer.toString(count));
                             if (count >= 8) {
                                 putDataToPhone();
                                 numcig++;
                                 outstr = ("asd\n") + outstr;
                                 writeFile(file, outstr.getBytes());
+                                Vibrator vib = (Vibrator) getSystemService((VIBRATOR_SERVICE));
+                                vib.vibrate(1000);
                             }
                         } catch (FileNotFoundException e) {
 
@@ -243,21 +263,21 @@ public class WearService extends Service implements SensorEventListener {
                     }
                     dragcount = 0;
                 }
-                //  lightercount++;
-                //System.out.println("dragcount:"+dragcount+" dragvalue:"+dragvalue);
                 //Log.d("accel", accelCurr.toString() + "\n");
 
 
                 //System.out.println("dragcount:" + dragcount + "\ndragvalue:" + dragvalue + "\nnumcig:" + numcig);
                 //Toast.makeText(getApplicationContext(), "dragcount:"+dragcount+" dragvalue:"+dragvalue+"numdrag:"+numdrags, Toast.LENGTH_LONG).show();
 
-                handler.postDelayed(mRunnable, 100);// move this inside the run method
+                handler.postDelayed(mRunnable, 400);// move this inside the run method
             }
         };
         mRunnable.run();
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        mSensorManager.registerListener(this,accelerometer,SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this,magnetometer,SensorManager.SENSOR_DELAY_NORMAL);
         return START_STICKY;
 
     }
@@ -321,7 +341,6 @@ public class WearService extends Service implements SensorEventListener {
                 azimut = orientation[0]; // orientation contains: azimut, pitch and roll
                 pitch = orientation[1];
                 roll = orientation[2];
-                System.out.println("pitch: "+pitch+"roll: "+roll+"\n");
 
                 x=(float)(pitch-0.5);
                 y=(float)(roll+1.517);
@@ -333,7 +352,6 @@ public class WearService extends Service implements SensorEventListener {
                     dragvalue = 0;
                 }
 
-                // Log.d("ANGLE", "\t"+pitch+"\t"+roll);
             }
 
             // total acc
@@ -344,7 +362,10 @@ public class WearService extends Service implements SensorEventListener {
 
     }
 
+    @Override
+    public void onDestroy() {
 
+    }
 
 
 }
